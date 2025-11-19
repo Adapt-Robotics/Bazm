@@ -1,3 +1,5 @@
+Here's the readme:
+
 # Bazm — Independently Benchmarking Small Language Models as Tool-Using Agents
 
 Bazm is a small, opinionated benchmark built to particularly test **small language models (SLMs)** as **agents that can act**.

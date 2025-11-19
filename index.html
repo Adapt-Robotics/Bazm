@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bazm — Benchmarking Small Language Models as Tool-Using Agents</title>
+    <meta name="description" content="An independent benchmark designed to evaluate Small Language Models (SLMs) as agents that act.">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons (Restored) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+                    colors: {
+                        brand: { DEFAULT: '#2678ff', hover: '#1b65e6' },
+                        brutal: { bg: '#050505', surface: '#0a0a0a', border: '#333333', text: '#eeeeee', muted: '#888888' }
+                    },
+                    boxShadow: { 'sharp': '4px 4px 0px 0px rgba(38, 120, 255, 0.2)' }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #050505; color: #eeeeee; }
+        ::-webkit-scrollbar { width: 12px; height: 12px; background: #050505; border-left: 1px solid #333; }
+        ::-webkit-scrollbar-thumb { background: #333; border: 1px solid #050505; }
+        ::-webkit-scrollbar-thumb:hover { background: #2678ff; }
+        .grid-bg { background-image: linear-gradient(to right, #111 1px, transparent 1px), linear-gradient(to bottom, #111 1px, transparent 1px); background-size: 40px 40px; }
+        .marquee-container { overflow: hidden; white-space: nowrap; position: relative; mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); }
+        .marquee-content { display: inline-block; padding-left: 100%; animation: marquee 12s linear infinite; }
+        @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col pt-16 grid-bg selection:bg-brand selection:text-white">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 border-b border-brutal-border bg-brutal-bg top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <i class="ph-fill ph-robot text-brand text-2xl"></i>
+                <span class="text-xl font-bold tracking-tight text-white font-sans">Bazm</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <a href="https://adapt-robotics.github.io/" target="_blank" class="flex items-center gap-2 group">
+                    <img src="AdaptLogo.jpg" alt="Adapt Robotics" class="h-6 w-auto object-contain grayscale group-hover:grayscale-0 transition-all">
+                    <span class="text-xs font-mono text-brutal-muted group-hover:text-white transition-colors uppercase tracking-wider hidden sm:block">Adapt Robotics</span>
+                </a>
+                <a href="https://github.com/Adapt-Robotics/Bazm" target="_blank" class="flex items-center gap-2 border border-brutal-border px-4 py-1.5 hover:bg-white hover:text-black transition-colors text-xs font-mono uppercase font-bold">
+                    <i class="ph-fill ph-github-logo text-lg"></i>
+                    <span>Source</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Leaderboard -->
+    <section class="py-16 relative flex-grow flex flex-col items-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-12 gap-8 border-l-2 border-brand pl-6">
+                <div>
+                    <h1 class="text-4xl md:text-5xl font-bold mb-4 font-mono uppercase tracking-tight leading-none">SLM Agent<br><span class="text-brand">Leaderboard</span></h1>
+                    <p class="text-brutal-muted max-w-xl text-sm md:text-base font-mono">> Evaluating Small Language Models (<10B)<br>> Task completion within ~20 steps<br>> Constrained hardware execution</p>
+                </div>
+                <!-- Filters with Event Delegation ID -->
+                <div id="filter-group" class="flex flex-wrap gap-px bg-brutal-border border border-brutal-border">
+                    <button class="filter-btn text-brand border-b-2 border-brand bg-brutal-bg hover:bg-brand hover:text-white px-6 py-3 text-xs font-mono uppercase font-bold transition-all min-w-[80px]" data-filter="all">All</button>
+                    <button class="filter-btn text-brutal-muted bg-brutal-bg hover:bg-brand hover:text-white px-6 py-3 text-xs font-mono uppercase font-bold transition-all min-w-[80px]" data-filter="<1B">&lt; 1B</button>
+                    <button class="filter-btn text-brutal-muted bg-brutal-bg hover:bg-brand hover:text-white px-6 py-3 text-xs font-mono uppercase font-bold transition-all min-w-[80px]" data-filter="2B-5B">2B-5B</button>
+                    <button class="filter-btn text-brutal-muted bg-brutal-bg hover:bg-brand hover:text-white px-6 py-3 text-xs font-mono uppercase font-bold transition-all min-w-[80px]" data-filter="6B-10B">6B-10B</button>
+                </div>
+            </div>
+
+            <div class="border border-brutal-border bg-brutal-bg relative">
+                <div class="absolute -top-1 -left-1 w-3 h-3 border-t border-l border-brand"></div>
+                <div class="absolute -bottom-1 -right-1 w-3 h-3 border-b border-r border-brand"></div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse font-mono text-sm">
+                        <thead>
+                            <tr class="border-b border-brutal-border bg-brutal-surface">
+                                <th class="p-5 font-bold text-brutal-muted uppercase text-xs w-24 border-r border-brutal-border text-center">Rank #</th>
+                                <th class="p-5 font-bold text-brutal-muted uppercase text-xs border-r border-brutal-border w-64">Model Identifier</th>
+                                <th class="p-5 font-bold text-brutal-muted uppercase text-xs border-r border-brutal-border w-24">Size</th>
+                                <th class="p-5 font-bold text-brutal-muted uppercase text-xs border-r border-brutal-border text-right w-32">Success %</th>
+                                <th class="p-5 font-bold text-brutal-muted uppercase text-xs border-r border-brutal-border text-right w-32">Avg Steps</th>
+                                <th class="p-5 font-bold text-brutal-muted uppercase text-xs hidden md:table-cell">Observed Behavior</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body" class="divide-y divide-brutal-border"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="flex justify-between items-center mt-2 font-mono text-xs text-brutal-muted uppercase">
+                <span>Status: Active</span><span>* Lower steps = higher efficiency</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Metrics Grid -->
+    <section class="border-y border-brutal-border bg-brutal-surface">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-brutal-border">
+                <!-- Card 1 -->
+                <div class="p-8 group hover:bg-white transition-colors duration-300">
+                    <div class="flex justify-between items-start mb-6">
+                        <i class="ph-bold ph-lightning text-2xl text-brand group-hover:text-black"></i>
+                        <span class="font-mono text-[10px] uppercase border border-brutal-border px-1 group-hover:border-black group-hover:text-black text-brutal-muted">Metric_01</span>
+                    </div>
+                    <h3 class="font-mono font-bold text-lg mb-2 group-hover:text-black">Action Efficiency</h3>
+                    <p class="text-sm text-brutal-muted leading-relaxed group-hover:text-black/80">Evaluates capability to solve tasks within a hard cap of 20 steps.</p>
+                </div>
+                <!-- Card 2 -->
+                <div class="p-8 group hover:bg-white transition-colors duration-300">
+                    <div class="flex justify-between items-start mb-6">
+                        <i class="ph-bold ph-wrench text-2xl text-brand group-hover:text-black"></i>
+                        <span class="font-mono text-[10px] uppercase border border-brutal-border px-1 group-hover:border-black group-hover:text-black text-brutal-muted">Metric_02</span>
+                    </div>
+                    <h3 class="font-mono font-bold text-lg mb-2 group-hover:text-black">API Reliability</h3>
+                    <p class="text-sm text-brutal-muted leading-relaxed group-hover:text-black/80">Tests adherence to tool interfaces vs hallucinating invalid parameters.</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="p-8 group hover:bg-white transition-colors duration-300">
+                    <div class="flex justify-between items-start mb-6">
+                         <i class="ph-bold ph-brain text-2xl text-brand group-hover:text-black"></i>
+                        <span class="font-mono text-[10px] uppercase border border-brutal-border px-1 group-hover:border-black group-hover:text-black text-brutal-muted">Metric_03</span>
+                    </div>
+                    <h3 class="font-mono font-bold text-lg mb-2 group-hover:text-black">Planning</h3>
+                    <p class="text-sm text-brutal-muted leading-relaxed group-hover:text-black/80">Analyzes error recovery and loop detection in short-term sequences.</p>
+                </div>
+                <!-- Card 4 -->
+                <div class="p-8 group hover:bg-white transition-colors duration-300">
+                    <div class="flex justify-between items-start mb-6">
+                        <i class="ph-fill ph-cpu text-2xl text-brand group-hover:text-black"></i>
+                        <span class="font-mono text-[10px] uppercase border border-brutal-border px-1 group-hover:border-black group-hover:text-black text-brutal-muted">Metric_04</span>
+                    </div>
+                    <h3 class="font-mono font-bold text-lg mb-2 group-hover:text-black">Hardware Reality</h3>
+                    <p class="text-sm text-brutal-muted leading-relaxed group-hover:text-black/80">Benchmarked on constrained, low-VRAM local consumer hardware.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Specs & Footer -->
+    <section class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 border border-brutal-border">
+                <div class="bg-brutal-surface p-4 border-b border-brutal-border"><h3 class="font-mono font-bold uppercase tracking-widest text-sm">System Configuration</h3></div>
+                <div class="divide-y divide-brutal-border">
+                    <div class="grid grid-cols-2 p-4 hover:bg-white/5 transition-colors"><span class="font-mono text-xs text-brutal-muted uppercase">Environment</span><span class="font-mono text-sm">TextWorld</span></div>
+                    <div class="grid grid-cols-2 p-4 hover:bg-white/5 transition-colors"><span class="font-mono text-xs text-brutal-muted uppercase">Sample Size</span><span class="font-mono text-sm">30 Episodes / Model</span></div>
+                    <div class="grid grid-cols-2 p-4 hover:bg-white/5 transition-colors"><span class="font-mono text-xs text-brutal-muted uppercase">Constraint</span><span class="font-mono text-sm text-brand">20 Step Budget</span></div>
+                    <div class="grid grid-cols-2 p-4 hover:bg-white/5 transition-colors"><span class="font-mono text-xs text-brutal-muted uppercase">Validation</span><span class="font-mono text-sm">Strict Regex Matching</span></div>
+                </div>
+            </div>
+            <div class="border border-brand p-8 flex flex-col justify-between bg-brand/5 relative overflow-hidden">
+                <div class="absolute -right-10 -top-10 w-32 h-32 bg-brand/20 rounded-full blur-3xl"></div>
+                <div><h3 class="font-mono font-bold text-xl uppercase mb-4">Contribute</h3><p class="text-sm text-brutal-muted mb-6 leading-relaxed">Feel free, to ping us if you want to discuss more, or have questions</p></div>
+                <a href="https://github.com/Adapt-Robotics/Bazm/issues" class="w-full bg-brand text-white text-center py-3 font-mono text-xs uppercase font-bold hover:bg-white hover:text-brand transition-colors border border-transparent hover:border-brand">Open Issue -></a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="border-t border-brutal-border py-12 bg-brutal-surface mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-3">
+                <!-- Replaced blue square with logo -->
+                <img src="AdaptLogo.jpg" alt="Adapt Logo" class="h-6 w-auto grayscale opacity-80">
+                <!-- Updated text and removed 'uppercase' class for natural reading -->
+                <span class="font-mono font-bold tracking-wide text-sm text-brutal-text">
+                    Ranking these small slop makers since 2025
+                </span>
+            </div>
+            <div class="flex gap-6 font-mono text-xs uppercase text-brutal-muted items-center">
+                <a href="https://github.com/Adapt-Robotics/Bazm" target="_blank" class="hover:text-brand flex items-center gap-1"><i class="ph-fill ph-github-logo text-lg"></i> GitHub</a>
+                <a href="https://www.linkedin.com/company/adaptrobotics" target="_blank" class="hover:text-brand flex items-center gap-1"><i class="ph-fill ph-linkedin-logo text-lg"></i> LinkedIn</a>
+                <a href="https://www.instagram.com/adaptsofficial/" target="_blank" class="hover:text-brand flex items-center gap-1"><i class="ph-fill ph-instagram-logo text-lg"></i> Instagram</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const models = [
+            { n: "Ministral-8b-instruct-2410", p: "8B Q4_K_M", c: "6B-10B", s: 80.0, st: 9.25, d: "Top performer. High reliability." },
+            { n: "Llama3", p: "8B - Q4_K_M", c: "6B-10B", s: 73.3, st: 10.41, d: "Strong baseline performance." },
+            { n: "Granite4", p: "7B - Q4_K_M", c: "6B-10B", s: 40.0, st: 13.67, d: "Moderate success, higher step count." },
+            { n: "Mistral 7B", p: "7B - Q4_K_M", c: "6B-10B", s: 26.7, st: 6.38, d: "Very fast but lower success rate." },
+            { n: "Qwen2.5VL", p: "8B - Q4_K_M", c: "6B-10B", s: 0.0, st: 0.0, d: "Failed to complete tasks." }
+        ];
+        
+        const render = (cat) => {
+            const data = models.filter(m => cat === 'all' || m.c === cat).sort((a, b) => b.s - a.s || a.st - b.st);
+            document.getElementById('leaderboard-body').innerHTML = data.length ? data.map((m, i) => {
+                const r = i === 0 ? '<span class="text-brand font-bold text-lg">#1</span>' : i < 3 ? `<span class="text-white font-bold">#${i+1}</span>` : `<span class="text-brutal-muted">#${i+1}</span>`;
+                const sc = m.s >= 70 ? 'text-brand' : m.s < 30 ? 'text-red-500' : 'text-orange-400';
+                return `<tr class="hover:bg-white/5 transition-colors group">
+                    <td class="p-5 text-center border-r border-brutal-border">${r}</td>
+                    <td class="p-5 border-r border-brutal-border overflow-hidden max-w-xs"><div class="marquee-container"><div class="marquee-content font-bold text-white">${m.n}</div></div></td>
+                    <td class="p-5 border-r border-brutal-border text-brutal-muted text-xs">${m.p}</td>
+                    <td class="p-5 border-r border-brutal-border text-right font-bold ${sc}">${m.s.toFixed(1)}%</td>
+                    <td class="p-5 border-r border-brutal-border text-right text-brutal-muted">${m.st > 0 ? m.st.toFixed(2) : '-'}</td>
+                    <td class="p-5 text-xs italic hidden md:table-cell text-brutal-muted truncate max-w-xs">${m.d}</td>
+                </tr>`
+            }).join('') : `<tr><td colspan="6" class="p-8 text-center text-brutal-muted italic border-t border-brutal-border">NO DATA FOUND FOR <span class="text-brand font-bold">${cat}</span></td></tr>`;
+        };
+
+        document.getElementById('filter-group').addEventListener('click', (e) => {
+            if (e.target.classList.contains('filter-btn')) {
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.remove('text-brand', 'border-b-2', 'border-brand');
+                    b.classList.add('text-brutal-muted');
+                });
+                e.target.classList.remove('text-brutal-muted');
+                e.target.classList.add('text-brand', 'border-b-2', 'border-brand');
+                render(e.target.dataset.filter);
+            }
+        });
+
+        render('all');
+    </script>
+</body>
+</html>
