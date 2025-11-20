@@ -179,7 +179,7 @@
                 <img src="AdaptLogo.jpg" alt="Adapt Logo" class="h-6 w-auto grayscale opacity-80">
                 <!-- Updated text and removed 'uppercase' class for natural reading -->
                 <span class="font-mono font-bold tracking-wide text-sm text-brutal-text">
-                    Ranking these small slop makers since 2025
+                    Ranking the small ones since 2025
                 </span>
             </div>
             <div class="flex gap-6 font-mono text-xs uppercase text-brutal-muted items-center">
@@ -193,10 +193,11 @@
     <script>
         const models = [
             { n: "Ministral-8b-instruct-2410", p: "8B Q4_K_M", c: "6B-10B", s: 80.0, st: 9.25, d: "Top performer. High reliability." },
-            { n: "Llama3", p: "8B - Q4_K_M", c: "6B-10B", s: 73.3, st: 10.41, d: "Strong baseline performance." },
+            { n: "Llama3", p: "8B - Q4_K_M", c: "6B-10B", s: 73.34, st: 10.41, d: "Strong baseline performance." },
             { n: "Granite4", p: "7B - Q4_K_M", c: "6B-10B", s: 40.0, st: 13.67, d: "Moderate success, higher step count." },
-            { n: "Mistral 7B", p: "7B - Q4_K_M", c: "6B-10B", s: 26.7, st: 6.38, d: "Very fast but lower success rate." },
-            { n: "Qwen2.5VL", p: "8B - Q4_K_M", c: "6B-10B", s: 0.0, st: 0.0, d: "Failed to complete tasks." }
+            { n: "Mistral 7B", p: "7B - Q4_K_M", c: "6B-10B", s: 26.67, st: 6.38, d: "Very fast but lower success rate." },
+            { n: "internlm2", p: "8B - Q4_0", c: "6B-10B", s: 3.34, st: 6.0, d: "Bad format disciple. Hallucinates a lot." },
+            { n: "Qwen2.5VL", p: "8B - Q4_K_M", c: "6B-10B", s: 0.0, st: 0.0, d: "Failed to complete any task fully." },
         ];
         
         const render = (cat) => {
